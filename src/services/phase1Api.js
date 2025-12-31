@@ -7,11 +7,6 @@ export const fetchArticles = async () => {
   return data;
 };
 
-// export const fetchArticleById = async (id) => {
-//   const { data } = await axios.get(`${PHASE1_BASE_URL}/articles/${id}`);
-//   return data;
-// };
-
 export const publishArticleToPhase1 = async (article) => {
   const { data } = await axios.post(
     `${PHASE1_BASE_URL}/articles`,

@@ -13,7 +13,6 @@ const PORT = process.env.PORT || 5001;
 
   const testFetch = async () => {
   const articles = await fetchArticles();
-  console.log("Latest 5 articles:", articles);
 };
 
 testFetch();

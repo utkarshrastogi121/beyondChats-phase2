@@ -5,67 +5,90 @@ import googleSearch from "../services/googleSearch.js";
 import scrapeContent from "../services/contentScraper.js";
 import rewriteArticle from "../services/aiRewriter.js";
 
-export const rewriteAndPublishController  = async (req, res) => {
-  console.log("🔥 rewriteAndPublishController HIT");
+export const rewriteAndPublishController = async (req, res) => {
   try {
-    // 1️⃣ Fetch latest 5 Phase 1 articles
     const articles = await Phase1Article.find()
       .sort({ createdAt: -1 })
       .limit(5);
 
     if (!articles.length) {
-      return res.status(404).json({ message: "No Phase 1 articles found" });
+      return res.status(404).json({
+        success: false,
+        message: "No Phase 1 articles found",
+      });
     }
 
-    // 2️⃣ Prepare bulk operations
     const bulkOps = [];
 
     for (const article of articles) {
-      // Google search for references
       const references = await googleSearch(article.title);
-      if (references.length < 2) continue; // skip if not enough references
+      if (references.length < 2) continue;
 
-      // Scrape reference content
       const ref1 = await scrapeContent(references[0].link);
       const ref2 = await scrapeContent(references[1].link);
 
-      // Rewrite using AI
       const rewrittenContent = await rewriteArticle(
         article.content,
         ref1,
         ref2
       );
 
-      // 3️⃣ Add bulkWrite operation (update if exists, otherwise insert)
       bulkOps.push({
         updateOne: {
           filter: { originalArticleId: article._id },
           update: {
             $set: {
               title: article.title,
+              originalArticleId: article._id,
               originalContent: article.content,
               rewrittenContent,
-              references: [
-                { title: references[0].title, link: references[0].link },
-                { title: references[1].title, link: references[1].link },
-              ],
+              references: references.slice(0, 2),
               updatedAt: new Date(),
             },
           },
-          upsert: true, // creates a new document if not exists
+          upsert: true,
         },
       });
     }
 
-    // 4️⃣ Execute all updates in bulk
+    if (!bulkOps.length) {
+      return res.status(400).json({
+        success: false,
+        message: "No articles qualified for rewriting",
+      });
+    }
+
     const result = await UpdatedArticle.bulkWrite(bulkOps);
 
-    res.json({
-      status: "success",
-      message: `Updated ${result.modifiedCount} articles, upserted ${result.upsertedCount}`,
+    res.status(200).json({
+      success: true,
+      payload: {
+        modified: result.modifiedCount,
+        upserted: result.upsertedCount,
+      },
     });
   } catch (err) {
     console.error("Rewrite & Save Error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getUpdatedArticlesController = async (req, res) => {
+  try {
+    const articles = await UpdatedArticle.find()
+      .sort({ updatedAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: articles,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch updated articles",
+    });
   }
 };

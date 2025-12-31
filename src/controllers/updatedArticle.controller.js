@@ -6,9 +6,7 @@ import scrapeContent from "../services/contentScraper.js";
 import rewriteArticle from "../services/aiRewriter.js";
 
 export const rewriteAndSaveController = async (req, res) => {
-    console.log("🔥 rewriteAndSaveController HIT");
   try {
-    // 1️⃣ Fetch latest 5 Phase 1 articles
     const articles = await Phase1Article.find()
       .sort({ createdAt: -1 })
       .limit(5);
@@ -19,24 +17,19 @@ export const rewriteAndSaveController = async (req, res) => {
 
     const updatedArticles = [];
 
-    // 2️⃣ Loop through each article
     for (const article of articles) {
-      // Google search for references
       const references = await googleSearch(article.title);
-      if (references.length < 2) continue; // skip if not enough references
+      if (references.length < 2) continue;
 
-      // Scrape reference content
       const ref1 = await scrapeContent(references[0].link);
       const ref2 = await scrapeContent(references[1].link);
 
-      // Rewrite using AI
       const rewrittenContent = await rewriteArticle(
         article.content,
         ref1,
         ref2
       );
 
-      // Save into UpdatedArticle
       const updatedArticle = await UpdatedArticle.create({
         title: article.title,
         originalArticleId: article._id,
@@ -50,8 +43,6 @@ export const rewriteAndSaveController = async (req, res) => {
 
       updatedArticles.push(updatedArticle);
     }
-
-    console.log("updated articles controller:", updatedArticles);
 
     res.json({
       status: "success",
