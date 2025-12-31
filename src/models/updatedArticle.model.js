@@ -2,21 +2,25 @@ import mongoose from "mongoose";
 
 const updatedArticleSchema = new mongoose.Schema(
   {
-    sourceArticleId: {
+    originalArticleId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "Phase1Article",
       required: true,
-      index: true,
+      unique: true,
     },
+
     title: String,
+    originalContent: String,
     rewrittenContent: String,
-    references: [String],
-    publishedAt: Date,
+
+    references: [
+      {
+        title: String,
+        link: String,
+      },
+    ],
   },
   { timestamps: true }
 );
 
-export default mongoose.model(
-  "UpdatedArticle",
-  updatedArticleSchema,
-  "updatedArticles"
-);
+export default mongoose.model("UpdatedArticle", updatedArticleSchema);
