@@ -7,6 +7,6 @@ import {
 const router = express.Router();
 
 router.post("/rewrite-publish/", rewriteAndPublishController);
-router.get("/api/updated-articles", getUpdatedArticlesController);
+router.get("/updated-articles", getUpdatedArticlesController);
 
 export default router;
