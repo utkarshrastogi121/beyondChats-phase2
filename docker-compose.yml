@@ -4,15 +4,11 @@ services:
     container_name: phase2-ai
     env_file:
       - .env
-    networks:
-      - beyondchats-net
-    environment:
-      MONGO_URI: "${MONGO_URI}"
-      REDIS_HOST: "${REDIS_HOST}"
-      REDIS_PORT: "${REDIS_PORT}"
-      REDIS_PASSWORD: "${REDIS_PASSWORD}"
     ports:
       - "3001:3000"
+    networks:
+      - beyondchats-net
+
 
 
 networks:
